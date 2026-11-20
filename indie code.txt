@@ -218,7 +218,7 @@ def ConfirmCandle(self):
 @plot.marker(
     style=plot.marker_style.CROSS,
     position=plot.marker_position.CENTER,
-    size=9,
+    size=7,
     title='Triggered Entry Candle (+)'
 )
 
