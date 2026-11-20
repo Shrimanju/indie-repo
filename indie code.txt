@@ -1,5 +1,7 @@
 # indie:lang_version = 5
 
+import indie
+
 from math import nan, isnan
 
 from indie import (
@@ -243,9 +245,9 @@ class Main(MainContext):
         self.show_monthly_daily_breakdown = show_monthly_daily_breakdown
 
         # One live drawing set per current trade. Completed drawings remain on chart.
-        self._trade_risk_box = None
-        self._trade_reward_box = None
-        self._trade_entry_line = None
+        self._trade_risk_box: indie.Optional[Rectangle] = None
+        self._trade_reward_box: indie.Optional[Rectangle] = None
+        self._trade_entry_line: indie.Optional[LineSegment] = None
 
         # Custom report date: YYYYMMDD. The selected date drives daily P/L;
         # its month drives monthly P/L and the daily breakdown.
@@ -3122,9 +3124,9 @@ class Main(MainContext):
                 color=color.MAROON,
                 line_width=1
             )
-            self.chart.draw(self._trade_risk_box)
-            self.chart.draw(self._trade_reward_box)
-            self.chart.draw(self._trade_entry_line)
+            self.chart.draw(self._trade_risk_box.value())
+            self.chart.draw(self._trade_reward_box.value())
+            self.chart.draw(self._trade_entry_line.value())
 
         # Extend only the current trade's own drawings. Freeze them on its
         # inactive resolution or active exit; later trades get new objects.
@@ -3144,15 +3146,18 @@ class Main(MainContext):
                 reward_top_now = max(visual_entry_now, visual_tp_now)
                 reward_bottom_now = min(visual_entry_now, visual_tp_now)
 
-                self._trade_risk_box.point_a = AbsolutePosition(setup_draw_time[0], risk_top_now)
-                self._trade_risk_box.point_b = AbsolutePosition(self.time[0], risk_bottom_now)
-                self._trade_reward_box.point_a = AbsolutePosition(setup_draw_time[0], reward_top_now)
-                self._trade_reward_box.point_b = AbsolutePosition(self.time[0], reward_bottom_now)
-                self._trade_entry_line.point_a = AbsolutePosition(setup_draw_time[0], visual_entry_now)
-                self._trade_entry_line.point_b = AbsolutePosition(self.time[0], visual_entry_now)
-                self.chart.draw(self._trade_risk_box)
-                self.chart.draw(self._trade_reward_box)
-                self.chart.draw(self._trade_entry_line)
+                risk_box = self._trade_risk_box.value()
+                reward_box = self._trade_reward_box.value()
+                entry_line = self._trade_entry_line.value()
+                risk_box.point_a = AbsolutePosition(setup_draw_time[0], risk_top_now)
+                risk_box.point_b = AbsolutePosition(self.time[0], risk_bottom_now)
+                reward_box.point_a = AbsolutePosition(setup_draw_time[0], reward_top_now)
+                reward_box.point_b = AbsolutePosition(self.time[0], reward_bottom_now)
+                entry_line.point_a = AbsolutePosition(setup_draw_time[0], visual_entry_now)
+                entry_line.point_b = AbsolutePosition(self.time[0], visual_entry_now)
+                self.chart.draw(risk_box)
+                self.chart.draw(reward_box)
+                self.chart.draw(entry_line)
 
                 if setup_draw_status[0] == -1.0 or trade_exited:
                     setup_draw_status[0] = 2.0
