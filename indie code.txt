@@ -27,7 +27,7 @@ from indie.drawings import (
 
 # Adaptive hybrid trailing is a visual/backtest stop manager for M1 charts.
 
-# Entry 1 uses the original candle midpoint: (high + low) / 2.
+# Primary Entry 1 uses the confirmed candle closing price as its planned entry.
 # It does not send or modify broker orders.
 
 # ============================================================
@@ -742,9 +742,12 @@ class Main(MainContext):
             abs(self.close[0]) * 0.0002
         )
 
+        # Keep midpoint pricing for the existing add-on entries (2 to 5).
+        # Primary Entry 1 uses the confirmed candle close instead.
         candidate_entry_price = (
             self.high[0] + self.low[0]
         ) / 2.0
+        primary_entry_price = self.close[0]
 
         candle_body = abs(self.close[0] - self.open[0])
 
@@ -1474,8 +1477,8 @@ class Main(MainContext):
         report_hit_trailing_sl = False
 
         # Resolve pending setups before managing active-trade exits. The
-        # confirmation candle is deliberately excluded: its midpoint is
-        # inside its own range and must not self-trigger the pending entry.
+        # confirmation candle is deliberately excluded: it must not self-trigger
+        # the newly planned close-price entry.
         if (
             self.is_closed_bar
             and pending_trade_side[0] != 0.0
@@ -2313,7 +2316,7 @@ class Main(MainContext):
             ):
 
                 # Preserve the original signal conditions without a deviation
-                # filter. Entry 1 uses the confirmation candle midpoint.
+                # filter. Entry 1 uses the confirmation candle closing price.
                 sell_entry_ready = sell_condition or sell_breakout_pullback_ready
                 buy_entry_ready = buy_condition or buy_breakout_pullback_ready
 
@@ -2326,8 +2329,8 @@ class Main(MainContext):
                         self.high[6], self.high[7]
                     ])
 
-                    # Original Entry 1 logic: confirmation candle midpoint.
-                    entry_price = candidate_entry_price
+                    # Primary Entry 1 is based on the completed confirmation candle close.
+                    entry_price = primary_entry_price
 
                     if sell_breakout_pullback_ready:
                         sell_reason = 'BREAKOUT + VOLUME PULLBACK'
@@ -2411,8 +2414,8 @@ class Main(MainContext):
                         self.low[6], self.low[7]
                     ])
 
-                    # Original Entry 1 logic: confirmation candle midpoint.
-                    entry_price = candidate_entry_price
+                    # Primary Entry 1 is based on the completed confirmation candle close.
+                    entry_price = primary_entry_price
 
                     if buy_breakout_pullback_ready:
                         buy_reason = 'BREAKOUT + VOLUME PULLBACK'
