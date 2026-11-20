@@ -3144,9 +3144,9 @@ class Main(MainContext):
                 reward_top_now = max(visual_entry_now, visual_tp_now)
                 reward_bottom_now = min(visual_entry_now, visual_tp_now)
 
-                self._trade_risk_box.point_a = AbsolutePosition(self.time[0], risk_top_now)
+                self._trade_risk_box.point_a = AbsolutePosition(setup_draw_time[0], risk_top_now)
                 self._trade_risk_box.point_b = AbsolutePosition(self.time[0], risk_bottom_now)
-                self._trade_reward_box.point_a = AbsolutePosition(self.time[0], reward_top_now)
+                self._trade_reward_box.point_a = AbsolutePosition(setup_draw_time[0], reward_top_now)
                 self._trade_reward_box.point_b = AbsolutePosition(self.time[0], reward_bottom_now)
                 self._trade_entry_line.point_a = AbsolutePosition(setup_draw_time[0], visual_entry_now)
                 self._trade_entry_line.point_b = AbsolutePosition(self.time[0], visual_entry_now)
