@@ -245,9 +245,9 @@ class Main(MainContext):
         self.show_monthly_daily_breakdown = show_monthly_daily_breakdown
 
         # One live drawing set per current trade. Completed drawings remain on chart.
-        self._trade_risk_box: indie.Optional[Rectangle] = None
-        self._trade_reward_box: indie.Optional[Rectangle] = None
-        self._trade_entry_line: indie.Optional[LineSegment] = None
+        self._trade_risk_box: indie.Optional[indie.drawings.Rectangle] = None
+        self._trade_reward_box: indie.Optional[indie.drawings.Rectangle] = None
+        self._trade_entry_line: indie.Optional[indie.drawings.LineSegment] = None
 
         # Custom report date: YYYYMMDD. The selected date drives daily P/L;
         # its month drives monthly P/L and the daily breakdown.
