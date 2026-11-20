@@ -1546,6 +1546,13 @@ class Main(MainContext):
                 inactive_status_price = (
                     pending_sl_value if pending_sl_touched else pending_tp_value
                 )
+                inactive_label_gap = max(
+                    self.high[0] - self.low[0],
+                    abs(self.close[0]) * 0.0002
+                )
+                inactive_status_price = (
+                    inactive_status_price - pending_side_value * inactive_label_gap
+                )
                 self.chart.draw(
                     LabelAbs(
                         inactive_status_text,
@@ -1593,7 +1600,13 @@ class Main(MainContext):
                 self.chart.draw(
                     LabelAbs(
                         active_status_text,
-                        AbsolutePosition(self.time[0], pending_entry_value),
+                        AbsolutePosition(
+                            self.time[0],
+                            pending_entry_value + pending_side_value * max(
+                                self.high[0] - self.low[0],
+                                abs(self.close[0]) * 0.0002
+                            )
+                        ),
                         font_size=10,
                         text_color=color.BLACK,
                         bg_color=color.TRANSPARENT
@@ -2585,7 +2598,13 @@ class Main(MainContext):
             self.chart.draw(
                 LabelAbs(
                     'LOT ' + str(round(trade_lot[0], 2)),
-                    AbsolutePosition(self.time[0], entry[0]),
+                    AbsolutePosition(
+                        self.time[0],
+                        entry[0] - side[0] * max(
+                            self.high[0] - self.low[0],
+                            abs(self.close[0]) * 0.0002
+                        )
+                    ),
                     font_size=10,
                     text_color=color.BLACK,
                     bg_color=color.TRANSPARENT
@@ -2768,9 +2787,25 @@ class Main(MainContext):
                     + ' | Reason: ' + entry345_description_reason
                 )
 
-            if self.is_closed_bar:
-
-                pass
+            if combined_trade_description != '':
+                description_gap = max(
+                    self.high[0] - self.low[0],
+                    abs(self.close[0]) * 0.0002
+                )
+                description_price = (
+                    self.high[0] + description_gap * 2.5
+                    if is_buy
+                    else self.low[0] - description_gap * 2.5
+                )
+                self.chart.draw(
+                    LabelAbs(
+                        combined_trade_description,
+                        AbsolutePosition(self.time[0], description_price),
+                        font_size=9,
+                        text_color=color.BLACK,
+                        bg_color=color.TRANSPARENT
+                    )
+                )
 
         # ====================================================
         # CURRENT CHART TIMEFRAME DAILY REPORT
