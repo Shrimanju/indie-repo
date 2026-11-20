@@ -3011,7 +3011,7 @@ class Main(MainContext):
         # Bar number is intentionally omitted from chart drawings.
 
         # ====================================================
-        # PRIMARY ENTRY MARKER
+        # PRIMARY ENTRY MARKER - RESTORED FROM ORIGINAL REPO
         # ====================================================
 
         marker_price = nan
@@ -3023,7 +3023,6 @@ class Main(MainContext):
                 and self.bar_index == self.delete_bar_index
             )
         ):
-
             marker_price = self.low[0] - entry_marker_offset
 
         elif (
@@ -3033,7 +3032,6 @@ class Main(MainContext):
                 and self.bar_index == self.delete_bar_index
             )
         ):
-
             marker_price = self.high[0] + entry_marker_offset
 
         marker_color = (
