@@ -404,6 +404,14 @@ class Main(MainContext):
         pending_trade_setup_bar = MutSeriesF.new(init=-1.0)
 
         entry_label_time = MutSeriesF.new(init=nan)
+        # Visual-only levels retained from setup through pending/active/inactive states.
+        setup_draw_entry = MutSeriesF.new(init=nan)
+        setup_draw_sl = MutSeriesF.new(init=nan)
+        setup_draw_tp = MutSeriesF.new(init=nan)
+        setup_draw_time = MutSeriesF.new(init=nan)
+        setup_draw_side = MutSeriesF.new(init=0.0)
+        setup_draw_lot = MutSeriesF.new(init=nan)
+        setup_draw_status = MutSeriesF.new(init=0.0)
         early_exit_warned = MutSeriesF.new(init=0.0)
 
         report_trades = MutSeriesF.new(init=0.0)
@@ -535,6 +543,13 @@ class Main(MainContext):
             pending_trade_setup_bar[0] = pending_trade_setup_bar[1]
 
             entry_label_time[0] = entry_label_time[1]
+            setup_draw_entry[0] = setup_draw_entry[1]
+            setup_draw_sl[0] = setup_draw_sl[1]
+            setup_draw_tp[0] = setup_draw_tp[1]
+            setup_draw_time[0] = setup_draw_time[1]
+            setup_draw_side[0] = setup_draw_side[1]
+            setup_draw_lot[0] = setup_draw_lot[1]
+            setup_draw_status[0] = setup_draw_status[1]
             early_exit_warned[0] = early_exit_warned[1]
 
             report_trades[0] = report_trades[1]
@@ -668,6 +683,13 @@ class Main(MainContext):
             pending_trade_setup_day[0] = nan
             pending_trade_setup_bar[0] = -1.0
             entry_label_time[0] = nan
+            setup_draw_entry[0] = nan
+            setup_draw_sl[0] = nan
+            setup_draw_tp[0] = nan
+            setup_draw_time[0] = nan
+            setup_draw_side[0] = 0.0
+            setup_draw_lot[0] = nan
+            setup_draw_status[0] = 0.0
             early_exit_warned[0] = 0.0
             report_trades[0] = 0.0
             report_active_trades[0] = 0.0
@@ -1528,16 +1550,24 @@ class Main(MainContext):
                 inactive_status_text = (
                     'INACTIVE | LOT ' + str(round(pending_trade_lot[0], 2))
                 )
+                inactive_label_offset = max(
+                    (self.high[0] - self.low[0]) * 0.60,
+                    abs(pending_entry_value) * 0.00008
+                )
                 self.chart.draw(
                     LabelAbs(
                         inactive_status_text,
-                        AbsolutePosition(self.time[0], pending_entry_value),
+                        AbsolutePosition(
+                            setup_draw_time[0],
+                            pending_entry_value + pending_side_value * inactive_label_offset
+                        ),
                         font_size=10,
                         text_color=color.WHITE,
                         bg_color=color.BLACK(0.70)
                     )
                 )
 
+                setup_draw_status[0] = -1.0
                 if pending_trade_setup_day[0] == self._selected_report_day_key:
                     report_inactive_trades[0] = report_inactive_trades[0] + 1.0
                     report_trades[0] = report_active_trades[0] + report_inactive_trades[0]
@@ -1578,7 +1608,7 @@ class Main(MainContext):
                 entry_count[0] = 1.0
                 last_entry_bar[0] = float(self.bar_index)
                 last_entry_price[0] = pending_entry_value
-                entry_label_time[0] = self.time[0]
+                setup_draw_status[0] = 1.0
                 if pending_trade_setup_day[0] == self._selected_report_day_key:
                     report_active_trades[0] = report_active_trades[0] + 1.0
                     report_trades[0] = report_active_trades[0] + report_inactive_trades[0]
@@ -2432,6 +2462,13 @@ class Main(MainContext):
                         pending_trade_risk_cash[0] = calculated_risk_cash
                         pending_trade_setup_day[0] = current_ist_day_key
                         pending_trade_setup_bar[0] = float(self.bar_index)
+                        setup_draw_entry[0] = entry_price
+                        setup_draw_sl[0] = stop_price
+                        setup_draw_tp[0] = target_price
+                        setup_draw_time[0] = self.time[0]
+                        setup_draw_side[0] = -1.0
+                        setup_draw_lot[0] = calculated_lot
+                        setup_draw_status[0] = 0.0
 
                         second_entry_price[0] = nan
                         third_entry_price[0] = nan
@@ -2517,6 +2554,13 @@ class Main(MainContext):
                         pending_trade_risk_cash[0] = calculated_risk_cash
                         pending_trade_setup_day[0] = current_ist_day_key
                         pending_trade_setup_bar[0] = float(self.bar_index)
+                        setup_draw_entry[0] = entry_price
+                        setup_draw_sl[0] = stop_price
+                        setup_draw_tp[0] = target_price
+                        setup_draw_time[0] = self.time[0]
+                        setup_draw_side[0] = 1.0
+                        setup_draw_lot[0] = calculated_lot
+                        setup_draw_status[0] = 0.0
 
                         second_entry_price[0] = nan
                         third_entry_price[0] = nan
@@ -2557,17 +2601,30 @@ class Main(MainContext):
         # PROFIT / LOSS LABELS ARE DRAWN ONLY AFTER EXIT
         # ====================================================
 
+        if side[0] != 0.0:
+            setup_draw_entry[0] = entry[0]
+            setup_draw_sl[0] = sl[0]
+            setup_draw_tp[0] = tp[0]
+            setup_draw_status[0] = 1.0
+            setup_draw_lot[0] = trade_lot[0]
+
         if (
             new_trade_entry_event
             and side[0] != 0.0
             and entry_count[0] == 1.0
             and trade_lot[0] == trade_lot[0]
         ):
-
+            active_label_offset = max(
+                (self.high[0] - self.low[0]) * 0.60,
+                abs(entry[0]) * 0.00008
+            )
             self.chart.draw(
                 LabelAbs(
                     'LOT ' + str(round(trade_lot[0], 2)) + ' | ACTIVE',
-                    AbsolutePosition(self.time[0], entry[0]),
+                    AbsolutePosition(
+                        setup_draw_time[0],
+                        entry[0] + side[0] * active_label_offset
+                    ),
                     font_size=10,
                     text_color=color.WHITE,
                     bg_color=color.BLACK(0.70)
@@ -3091,14 +3148,14 @@ class Main(MainContext):
             ema50[0],
             ema200[0],
 
-            entry[0],
+            setup_draw_entry[0],
             second_entry_price[0],
             third_entry_price[0],
             fourth_entry_price[0],
             fifth_entry_price[0],
 
-            sl[0],
-            tp[0],
+            setup_draw_sl[0],
+            setup_draw_tp[0],
 
             plot.Fill(),
             plot.Fill(),
