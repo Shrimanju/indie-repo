@@ -449,17 +449,22 @@ class Main(MainContext):
         monthly_day_31_profit = MutSeriesF.new(init=0.0)
         report_rr_setting = MutSeriesF.new(init=nan)
 
+        # Daily capital protection state, based on IST day and closed active-trade P/L.
+        risk_day_key = MutSeriesF.new(init=nan)
+        daily_start_balance = MutSeriesF.new(init=nan)
+        daily_realized_pnl = MutSeriesF.new(init=0.0)
+        reduced_risk_mode = MutSeriesF.new(init=0.0)
+
         entry_price = nan
         stop_price = nan
         risk = nan
         target_price = nan
 
-        # Use the normal 5% risk plus the optional buffer (maximum 2%).
-        # With the supplied settings, the absolute per-trade ceiling is 7%.
-        total_risk_percent = min(7.0, self.risk_percent + self.risk_buffer_percent)
-        risk_budget_cash = (
-            self.account_capital * total_risk_percent / 100.0
-        )
+        # Daily risk mode is updated after closed-trade P/L is processed below.
+        normal_risk_percent = min(7.0, self.risk_percent + self.risk_buffer_percent)
+        reduced_risk_percent = 4.0  # 3% target + 1% additional buffer
+        total_risk_percent = normal_risk_percent
+        risk_budget_cash = self.account_capital * total_risk_percent / 100.0
 
         risk_per_one_lot = nan
         calculated_lot = 0.0
@@ -574,6 +579,11 @@ class Main(MainContext):
             monthly_day_30_profit[0] = monthly_day_30_profit[1]
             monthly_day_31_profit[0] = monthly_day_31_profit[1]
             report_rr_setting[0] = report_rr_setting[1]
+
+            risk_day_key[0] = risk_day_key[1]
+            daily_start_balance[0] = daily_start_balance[1]
+            daily_realized_pnl[0] = daily_realized_pnl[1]
+            reduced_risk_mode[0] = reduced_risk_mode[1]
 
             pending_buy[0] = pending_buy[1]
             pending_buy_average[0] = pending_buy_average[1]
@@ -1473,6 +1483,14 @@ class Main(MainContext):
         report_hit_tp = False
         report_hit_trailing_sl = False
 
+        # Reset the daily baseline at 12:00 AM IST (one epoch-day key per IST day).
+        # account_capital is the configured starting-balance snapshot for the day.
+        if risk_day_key[0] != current_ist_day_key:
+            risk_day_key[0] = current_ist_day_key
+            daily_start_balance[0] = self.account_capital
+            daily_realized_pnl[0] = 0.0
+            reduced_risk_mode[0] = 0.0
+
         # Resolve pending setups before managing active-trade exits. The
         # confirmation candle is deliberately excluded: its midpoint is
         # inside its own range and must not self-trigger the pending entry.
@@ -1647,6 +1665,17 @@ class Main(MainContext):
                                 bg_color=color.TRANSPARENT
                             )
                         )
+
+                    # Update the protection ledger from this closed active trade only.
+                    # Pending/inactive orders and manual exits are intentionally excluded.
+                    if current_ist_day_key == risk_day_key[0]:
+                        daily_realized_pnl[0] = daily_realized_pnl[0] + realized_pnl
+                        daily_loss_threshold = daily_start_balance[0] * 0.30
+
+                        if daily_realized_pnl[0] <= -daily_loss_threshold:
+                            reduced_risk_mode[0] = 1.0
+                        elif daily_realized_pnl[0] >= 0.0:
+                            reduced_risk_mode[0] = 0.0
 
                     # ========================================
                     # DAILY / MONTHLY REPORT CALCULATION
@@ -2300,6 +2329,19 @@ class Main(MainContext):
                     sell_breakout_entry_price = pending_sell_high[0]
 
             # ================================================
+            # DYNAMIC DAILY RISK BUDGET
+            # ================================================
+
+            if reduced_risk_mode[0] == 1.0:
+                total_risk_percent = reduced_risk_percent
+            else:
+                total_risk_percent = normal_risk_percent
+
+            risk_budget_cash = (
+                self.account_capital * total_risk_percent / 100.0
+            )
+
+            # ================================================
             # NEW PRIMARY ENTRY
             # ================================================
 
@@ -2823,6 +2865,12 @@ class Main(MainContext):
                 + self.risk_reward.ljust(value_width) + ' |'
             )
 
+            risk_mode_text = 'REDUCED 3% + 1%' if reduced_risk_mode[0] == 1.0 else 'NORMAL 5% + 2%'
+            risk_mode_row = (
+                '| ' + 'Current Risk Mode'.ljust(label_width) + ' | '
+                + risk_mode_text.ljust(value_width) + ' |'
+            )
+
             net_profit_row = (
                 '| ' + 'Daily Net P/L'.ljust(label_width) + ' | '
                 + ('$' + str(round(report_net_profit[0], 2))).ljust(value_width) + ' |'
@@ -2849,6 +2897,7 @@ class Main(MainContext):
                 + trailing_sl_row + '\n'
                 + win_row + '\n'
                 + rr_row + '\n'
+                + risk_mode_row + '\n'
                 + net_profit_row + '\n'
                 + monthly_net_profit_row
             )
