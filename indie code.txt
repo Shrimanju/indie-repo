@@ -1551,7 +1551,7 @@ class Main(MainContext):
                     abs(self.close[0]) * 0.0002
                 )
                 inactive_status_price = (
-                    inactive_status_price - pending_side_value * inactive_label_gap
+                    inactive_status_price - pending_side_value * inactive_label_gap * 3.0
                 )
                 self.chart.draw(
                     LabelAbs(
@@ -1605,7 +1605,7 @@ class Main(MainContext):
                             pending_entry_value + pending_side_value * max(
                                 self.high[0] - self.low[0],
                                 abs(self.close[0]) * 0.0002
-                            )
+                            ) * 3.0
                         ),
                         font_size=10,
                         text_color=color.BLACK,
@@ -1689,7 +1689,13 @@ class Main(MainContext):
                         self.chart.draw(
                             LabelAbs(
                                 'PROFIT $' + str(round(result_amount, 2)),
-                                AbsolutePosition(self.time[0], tp[0]),
+                                AbsolutePosition(
+                                    self.time[0],
+                                    tp[0] + side[0] * max(
+                                        self.high[0] - self.low[0],
+                                        abs(self.close[0]) * 0.0002
+                                    ) * 2.0
+                                ),
                                 font_size=10,
                                 text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
@@ -1705,7 +1711,13 @@ class Main(MainContext):
                         self.chart.draw(
                             LabelAbs(
                                 exit_label + str(round(result_amount, 2)),
-                                AbsolutePosition(self.time[0], sl[0]),
+                                AbsolutePosition(
+                                    self.time[0],
+                                    sl[0] - side[0] * max(
+                                        self.high[0] - self.low[0],
+                                        abs(self.close[0]) * 0.0002
+                                    ) * 2.0
+                                ),
                                 font_size=10,
                                 text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
@@ -2603,7 +2615,7 @@ class Main(MainContext):
                         entry[0] - side[0] * max(
                             self.high[0] - self.low[0],
                             abs(self.close[0]) * 0.0002
-                        )
+                        ) * 3.0
                     ),
                     font_size=10,
                     text_color=color.BLACK,
@@ -2793,7 +2805,7 @@ class Main(MainContext):
                     abs(self.close[0]) * 0.0002
                 )
                 description_price = (
-                    self.high[0] + description_gap * 2.5
+                    self.high[0] + description_gap * 5.0
                     if is_buy
                     else self.low[0] - description_gap * 2.5
                 )
