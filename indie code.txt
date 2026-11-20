@@ -215,6 +215,13 @@ def ConfirmCandle(self):
     title='Entry Signal'
 )
 
+@plot.marker(
+    style=plot.marker_style.CROSS,
+    position=plot.marker_position.CENTER,
+    size=9,
+    title='Triggered Entry Candle (+)'
+)
+
 
 # ============================================================
 # MAIN STRATEGY
@@ -1523,6 +1530,21 @@ class Main(MainContext):
             if pending_exit_touched:
                 # Conservative rule: if entry and pre-entry SL/TP are touched
                 # in the same candle, the order is Inactive, never a trade.
+                # Visual-only inactive-order marker. Existing pending-order
+                # classification and P/L calculations remain unchanged.
+                inactive_status_text = (
+                    'INACTIVE | LOT ' + str(round(pending_trade_lot[0], 2))
+                )
+                self.chart.draw(
+                    LabelAbs(
+                        inactive_status_text,
+                        AbsolutePosition(self.time[0], pending_entry_value),
+                        font_size=10,
+                        text_color=color.WHITE,
+                        bg_color=color.BLACK(0.70)
+                    )
+                )
+
                 if pending_trade_setup_day[0] == self._selected_report_day_key:
                     report_inactive_trades[0] = report_inactive_trades[0] + 1.0
                     report_trades[0] = report_active_trades[0] + report_inactive_trades[0]
@@ -1646,7 +1668,7 @@ class Main(MainContext):
                                 AbsolutePosition(self.time[0], tp[0]),
                                 font_size=10,
                                 text_color=color.GREEN,
-                                bg_color=color.TRANSPARENT
+                                bg_color=color.BLACK(0.70)
                             )
                         )
 
@@ -1662,7 +1684,7 @@ class Main(MainContext):
                                 AbsolutePosition(self.time[0], sl[0]),
                                 font_size=10,
                                 text_color=color.RED,
-                                bg_color=color.TRANSPARENT
+                                bg_color=color.BLACK(0.70)
                             )
                         )
 
@@ -2554,8 +2576,18 @@ class Main(MainContext):
                     'LOT ' + str(round(trade_lot[0], 2)),
                     AbsolutePosition(self.time[0], entry[0]),
                     font_size=10,
-                    text_color=color.BLACK,
-                    bg_color=color.TRANSPARENT
+                    text_color=color.WHITE,
+                    bg_color=color.BLACK(0.70)
+                )
+            )
+
+            self.chart.draw(
+                LabelAbs(
+                    'ACTIVE',
+                    AbsolutePosition(self.time[0], entry[0]),
+                    font_size=9,
+                    text_color=color.WHITE,
+                    bg_color=color.BLACK(0.70)
                 )
             )
 
@@ -3042,6 +3074,17 @@ class Main(MainContext):
             else color.TRANSPARENT
         )
 
+        # A separate red + is plotted only on the candle that actually
+        # triggers the pending entry. This does not alter entry conditions.
+        triggered_entry_marker_price = (
+            entry[0] if new_trade_entry_event and side[0] != 0.0 else nan
+        )
+        triggered_entry_marker_color = (
+            color.RED
+            if new_trade_entry_event and side[0] != 0.0
+            else color.TRANSPARENT
+        )
+
         # ====================================================
         # OUTPUT
         # ====================================================
@@ -3067,5 +3110,10 @@ class Main(MainContext):
             plot.Marker(
                 value=marker_price,
                 color=marker_color
+            ),
+
+            plot.Marker(
+                value=triggered_entry_marker_price,
+                color=triggered_entry_marker_color
             )
         )
