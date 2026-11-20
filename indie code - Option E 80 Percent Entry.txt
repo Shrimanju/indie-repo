@@ -2401,9 +2401,9 @@ class Main(MainContext):
                         self.high[6], self.high[7]
                     ])
 
-                    # Option E: 80% of signal candle range measured from Low.
+                    # Option E SELL: 20% of signal candle range measured from Low.
                     entry_price = self.low[0] + (
-                        (self.high[0] - self.low[0]) * 0.80
+                        (self.high[0] - self.low[0]) * 0.20
                     )
 
                     if sell_breakout_pullback_ready:
@@ -2488,7 +2488,7 @@ class Main(MainContext):
                         self.low[6], self.low[7]
                     ])
 
-                    # Option E: 80% of signal candle range measured from Low.
+                    # Option E BUY: 80% of signal candle range measured from Low.
                     entry_price = self.low[0] + (
                         (self.high[0] - self.low[0]) * 0.80
                     )
