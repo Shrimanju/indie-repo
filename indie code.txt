@@ -2705,8 +2705,8 @@ class Main(MainContext):
             if entry[0] == entry[0]:
 
                 combined_trade_description += (
-                    'Entry 1: ' + str(round(entry[0], 2))
-                    + sl_text + tp_text + lot_text
+                    '\nEntry 1: ' + str(round(entry[0], 2))
+                    + sl_text + tp_text
                     + ' | Reason: ' + entry1_description_reason
                 )
 
