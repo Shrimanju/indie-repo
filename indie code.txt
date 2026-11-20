@@ -1542,7 +1542,7 @@ class Main(MainContext):
                 # Show the final pending-order status on its resolution candle.
                 inactive_side_text = 'BUY' if pending_side_value == 1.0 else 'SELL'
                 inactive_status_text = (
-                    'INACTIVE | ' + inactive_side_text
+                    '✕ INACTIVE | ' + inactive_side_text
                     + ' | LOT ' + str(round(pending_trade_lot[0], 2))
                 )
                 inactive_status_price = (
@@ -1591,7 +1591,7 @@ class Main(MainContext):
                 # Show ACTIVE on the exact candle where the pending entry triggers.
                 active_side_text = 'BUY' if pending_side_value == 1.0 else 'SELL'
                 active_status_text = (
-                    'ACTIVE | ' + active_side_text
+                    '✓ ACTIVE | ' + active_side_text
                     + ' | LOT ' + str(round(pending_trade_lot[0], 2))
                 )
                 self.chart.draw(
@@ -2591,6 +2591,18 @@ class Main(MainContext):
                     'LOT ' + str(round(trade_lot[0], 2)),
                     AbsolutePosition(self.time[0], entry[0]),
                     font_size=10,
+                    text_color=color.BLACK,
+                    bg_color=color.TRANSPARENT
+                )
+            )
+
+            # Mark the exact candle where the pending entry becomes ACTIVE.
+            trigger_side_text = 'BUY' if side[0] == 1.0 else 'SELL'
+            self.chart.draw(
+                LabelAbs(
+                    '⚡ ' + trigger_side_text,
+                    AbsolutePosition(self.time[0], entry[0]),
+                    font_size=11,
                     text_color=color.BLACK,
                     bg_color=color.TRANSPARENT
                 )
