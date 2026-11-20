@@ -18,6 +18,8 @@ from indie.algorithms import Ema, Rsi, Atr, Adx
 from indie.drawings import (
     LabelRel,
     LabelAbs,
+    Rectangle,
+    LineSegment,
     AbsolutePosition,
     RelativePosition,
     vertical_anchor as va,
@@ -187,26 +189,10 @@ def ConfirmCandle(self):
 @plot.line(id='ema50', color=color.BLUE, title='EMA 50')
 @plot.line(id='ema200', color=color.YELLOW, title='EMA 200')
 
-@plot.line(id='entry', color=color.MAROON, line_style=line_style.SOLID, line_width=1, title='Entry 1 Price')
 @plot.line(id='second_entry_price', color=color.BLACK, line_style=line_style.DOTTED, line_width=4, title='Entry 2 Price')
 @plot.line(id='third_entry_price', color=color.FUCHSIA, line_style=line_style.DOTTED, line_width=4, title='Entry 3 Price')
 @plot.line(id='fourth_entry_price', color=color.YELLOW, line_style=line_style.DOTTED, line_width=4, title='Entry 4 Price')
 @plot.line(id='fifth_entry_price', color=color.PURPLE, line_style=line_style.DOTTED, line_width=4, title='Entry 5 Price')
-
-@plot.line(id='sl', color=color.RED, line_width=3, title='Adaptive Stop Loss (visual simulation)')
-@plot.line(id='tp', color=color.GREEN, line_width=3, title='Take Profit')
-
-@plot.fill(
-    'sl', 'entry',
-    color=color.RED(0.20),
-    title='Risk Zone'
-)
-
-@plot.fill(
-    'entry', 'tp',
-    color=color.GREEN(0.20),
-    title='Reward Zone'
-)
 
 @plot.marker(
     style=plot.marker_style.CROSS,
@@ -255,6 +241,11 @@ class Main(MainContext):
         self.show_entry_descriptions = show_entry_descriptions
         self.show_daily_report = show_daily_report
         self.show_monthly_daily_breakdown = show_monthly_daily_breakdown
+
+        # One live drawing set per current trade. Completed drawings remain on chart.
+        self._trade_risk_box = None
+        self._trade_reward_box = None
+        self._trade_entry_line = None
 
         # Custom report date: YYYYMMDD. The selected date drives daily P/L;
         # its month drives monthly P/L and the daily breakdown.
@@ -3098,6 +3089,75 @@ class Main(MainContext):
         # Bar number is intentionally omitted from chart drawings.
 
         # ====================================================
+        # INDIVIDUAL TRADE DRAWINGS (IMAGE 2 STYLE)
+        # ====================================================
+
+        # Create a fresh risk/reward box pair on each new setup candle.
+        # Unlike plot.fill, Rectangle drawings are independent per trade.
+        if buy_signal or sell_signal:
+            visual_side = 1.0 if buy_signal else -1.0
+            visual_entry = pending_trade_entry[0]
+            visual_sl = pending_trade_sl[0]
+            visual_tp = pending_trade_tp[0]
+            risk_top = max(visual_entry, visual_sl)
+            risk_bottom = min(visual_entry, visual_sl)
+            reward_top = max(visual_entry, visual_tp)
+            reward_bottom = min(visual_entry, visual_tp)
+
+            self._trade_risk_box = Rectangle(
+                AbsolutePosition(self.time[0], risk_top),
+                AbsolutePosition(self.time[0], risk_bottom),
+                line_color=color.RED,
+                bg_color=color.RED(0.20)
+            )
+            self._trade_reward_box = Rectangle(
+                AbsolutePosition(self.time[0], reward_top),
+                AbsolutePosition(self.time[0], reward_bottom),
+                line_color=color.GREEN,
+                bg_color=color.GREEN(0.20)
+            )
+            self._trade_entry_line = LineSegment(
+                AbsolutePosition(self.time[0], visual_entry),
+                AbsolutePosition(self.time[0], visual_entry),
+                color=color.MAROON,
+                line_width=1
+            )
+            self.chart.draw(self._trade_risk_box)
+            self.chart.draw(self._trade_reward_box)
+            self.chart.draw(self._trade_entry_line)
+
+        # Extend only the current trade's own drawings. Freeze them on its
+        # inactive resolution or active exit; later trades get new objects.
+        if self._trade_risk_box is not None:
+            drawing_is_live = (
+                pending_trade_side[0] != 0.0
+                or side[0] != 0.0
+                or setup_draw_status[0] == -1.0
+                or trade_exited
+            )
+            if drawing_is_live:
+                visual_entry_now = setup_draw_entry[0]
+                visual_sl_now = sl[0] if side[0] != 0.0 else setup_draw_sl[0]
+                visual_tp_now = tp[0] if side[0] != 0.0 else setup_draw_tp[0]
+                risk_top_now = max(visual_entry_now, visual_sl_now)
+                risk_bottom_now = min(visual_entry_now, visual_sl_now)
+                reward_top_now = max(visual_entry_now, visual_tp_now)
+                reward_bottom_now = min(visual_entry_now, visual_tp_now)
+
+                self._trade_risk_box.point_a = AbsolutePosition(self.time[0], risk_top_now)
+                self._trade_risk_box.point_b = AbsolutePosition(self.time[0], risk_bottom_now)
+                self._trade_reward_box.point_a = AbsolutePosition(self.time[0], reward_top_now)
+                self._trade_reward_box.point_b = AbsolutePosition(self.time[0], reward_bottom_now)
+                self._trade_entry_line.point_a = AbsolutePosition(setup_draw_time[0], visual_entry_now)
+                self._trade_entry_line.point_b = AbsolutePosition(self.time[0], visual_entry_now)
+                self.chart.draw(self._trade_risk_box)
+                self.chart.draw(self._trade_reward_box)
+                self.chart.draw(self._trade_entry_line)
+
+                if setup_draw_status[0] == -1.0 or trade_exited:
+                    setup_draw_status[0] = 2.0
+
+        # ====================================================
         # PRIMARY ENTRY MARKER
         # ====================================================
 
@@ -3163,17 +3223,10 @@ class Main(MainContext):
             ema50[0],
             ema200[0],
 
-            setup_draw_entry[0],
             second_entry_price[0],
             third_entry_price[0],
             fourth_entry_price[0],
             fifth_entry_price[0],
-
-            setup_draw_sl[0],
-            setup_draw_tp[0],
-
-            plot.Fill(),
-            plot.Fill(),
 
             plot.Marker(
                 value=marker_price,
