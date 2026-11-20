@@ -1540,10 +1540,8 @@ class Main(MainContext):
                     report_inactive_pnl[0] = report_inactive_pnl[0] + inactive_result
 
                 # Show the final pending-order status on its resolution candle.
-                inactive_side_text = 'BUY' if pending_side_value == 1.0 else 'SELL'
                 inactive_status_text = (
-                    '✕ INACTIVE | ' + inactive_side_text
-                    + ' | LOT ' + str(round(pending_trade_lot[0], 2))
+                    'INACTIVE | LOT ' + str(round(pending_trade_lot[0], 2))
                 )
                 inactive_status_price = (
                     pending_sl_value if pending_sl_touched else pending_tp_value
@@ -1589,10 +1587,8 @@ class Main(MainContext):
                     report_trades[0] = report_active_trades[0] + report_inactive_trades[0]
 
                 # Show ACTIVE on the exact candle where the pending entry triggers.
-                active_side_text = 'BUY' if pending_side_value == 1.0 else 'SELL'
                 active_status_text = (
-                    '✓ ACTIVE | ' + active_side_text
-                    + ' | LOT ' + str(round(pending_trade_lot[0], 2))
+                    'ACTIVE | LOT ' + str(round(pending_trade_lot[0], 2))
                 )
                 self.chart.draw(
                     LabelAbs(
@@ -2596,18 +2592,6 @@ class Main(MainContext):
                 )
             )
 
-            # Mark the exact candle where the pending entry becomes ACTIVE.
-            trigger_side_text = 'BUY' if side[0] == 1.0 else 'SELL'
-            self.chart.draw(
-                LabelAbs(
-                    '⚡ ' + trigger_side_text,
-                    AbsolutePosition(self.time[0], entry[0]),
-                    font_size=11,
-                    text_color=color.BLACK,
-                    bg_color=color.TRANSPARENT
-                )
-            )
-
         if (
             self.show_entry_descriptions
             and new_trade_entry_event
@@ -2616,7 +2600,7 @@ class Main(MainContext):
 
             is_buy = side[0] == 1.0
 
-            trade_symbol = '▲ BUY' if is_buy else '▼ SELL'
+            trade_symbol = ''
 
             entry1_description_reason = (
                 buy_reason if is_buy else sell_reason
@@ -3101,9 +3085,17 @@ class Main(MainContext):
         plot_tp_value = tp[0]
 
         if pending_trade_side[0] != 0.0:
-            plot_entry_value = pending_trade_entry[0]
-            plot_sl_value = pending_trade_sl[0]
-            plot_tp_value = pending_trade_tp[0]
+            # Do not draw the projection over the setup candle itself.
+            # Begin the Entry / SL / TP levels on the very next candle,
+            # after the setup candle has fully closed.
+            if self.bar_index > pending_trade_setup_bar[0]:
+                plot_entry_value = pending_trade_entry[0]
+                plot_sl_value = pending_trade_sl[0]
+                plot_tp_value = pending_trade_tp[0]
+            else:
+                plot_entry_value = nan
+                plot_sl_value = nan
+                plot_tp_value = nan
 
         # ====================================================
         # OUTPUT
