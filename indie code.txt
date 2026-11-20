@@ -1560,7 +1560,7 @@ class Main(MainContext):
                 # Visual-only inactive-order marker. Existing pending-order
                 # classification and P/L calculations remain unchanged.
                 inactive_status_text = (
-                    'INACTIVE | LOT ' + str(round(pending_trade_lot[0], 2))
+                    '✕ INACTIVE | LOT ' + str(round(pending_trade_lot[0], 2))
                 )
                 inactive_label_offset = max(
                     (self.high[0] - self.low[0]) * 0.60,
@@ -1570,7 +1570,7 @@ class Main(MainContext):
                     LabelAbs(
                         inactive_status_text,
                         AbsolutePosition(
-                            setup_draw_time[0],
+                            self.time[0],
                             pending_entry_value + pending_side_value * inactive_label_offset
                         ),
                         font_size=10,
@@ -2632,9 +2632,9 @@ class Main(MainContext):
             )
             self.chart.draw(
                 LabelAbs(
-                    'LOT ' + str(round(trade_lot[0], 2)) + ' | ACTIVE',
+                    '✓ ACTIVE | LOT ' + str(round(trade_lot[0], 2)),
                     AbsolutePosition(
-                        setup_draw_time[0],
+                        self.time[0],
                         entry[0] + side[0] * active_label_offset
                     ),
                     font_size=10,
@@ -3204,16 +3204,24 @@ class Main(MainContext):
             else color.TRANSPARENT
         )
 
-        # Draw the triggered-entry plus directly as a chart label.
-        # This avoids introducing a second @plot.marker size setting.
+        # Mark the exact candle where the pending order becomes an active trade.
+        # BUY and SELL use distinct icons at the actual triggered entry candle.
         if new_trade_entry_event and side[0] != 0.0:
+            triggered_icon = '⚡ BUY' if side[0] > 0.0 else '⚡ SELL'
+            triggered_icon_offset = max(
+                (self.high[0] - self.low[0]) * 0.35,
+                abs(entry[0]) * 0.00005
+            )
             self.chart.draw(
                 LabelAbs(
-                    '+',
-                    AbsolutePosition(self.time[0], entry[0]),
-                    font_size=12,
-                    text_color=color.RED,
-                    bg_color=color.TRANSPARENT
+                    triggered_icon,
+                    AbsolutePosition(
+                        self.time[0],
+                        entry[0] - side[0] * triggered_icon_offset
+                    ),
+                    font_size=11,
+                    text_color=color.YELLOW,
+                    bg_color=color.BLACK(0.65)
                 )
             )
 
