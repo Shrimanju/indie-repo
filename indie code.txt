@@ -3090,6 +3090,22 @@ class Main(MainContext):
         )
 
         # ====================================================
+        # VISUAL TRADE LEVELS
+        # Keep the planned Entry / SL / TP visible from the setup
+        # candle while the order is pending. This is display-only;
+        # internal active-trade calculations continue using entry/sl/tp.
+        # ====================================================
+
+        plot_entry_value = entry[0]
+        plot_sl_value = sl[0]
+        plot_tp_value = tp[0]
+
+        if pending_trade_side[0] != 0.0:
+            plot_entry_value = pending_trade_entry[0]
+            plot_sl_value = pending_trade_sl[0]
+            plot_tp_value = pending_trade_tp[0]
+
+        # ====================================================
         # OUTPUT
         # ====================================================
 
@@ -3099,14 +3115,14 @@ class Main(MainContext):
             ema50[0],
             ema200[0],
 
-            entry[0],
+            plot_entry_value,
             second_entry_price[0],
             third_entry_price[0],
             fourth_entry_price[0],
             fifth_entry_price[0],
 
-            sl[0],
-            tp[0],
+            plot_sl_value,
+            plot_tp_value,
 
             plot.Fill(),
             plot.Fill(),
