@@ -187,7 +187,7 @@ def ConfirmCandle(self):
 @plot.line(id='ema50', color=color.BLUE, title='EMA 50')
 @plot.line(id='ema200', color=color.YELLOW, title='EMA 200')
 
-@plot.line(id='entry', color=color.MAROON, title='Entry 1 Price')
+@plot.line(id='entry', color=color.MAROON, line_style=line_style.SOLID, line_width=1, title='Entry 1 Price')
 @plot.line(id='second_entry_price', color=color.BLACK, line_style=line_style.DOTTED, line_width=4, title='Entry 2 Price')
 @plot.line(id='third_entry_price', color=color.FUCHSIA, line_style=line_style.DOTTED, line_width=4, title='Entry 3 Price')
 @plot.line(id='fourth_entry_price', color=color.YELLOW, line_style=line_style.DOTTED, line_width=4, title='Entry 4 Price')
@@ -551,6 +551,21 @@ class Main(MainContext):
             setup_draw_lot[0] = setup_draw_lot[1]
             setup_draw_status[0] = setup_draw_status[1]
             early_exit_warned[0] = early_exit_warned[1]
+
+            # Break the previous setup's visual segment after it resolves.
+            # NaN gaps prevent plot lines/fills from joining separate trades.
+            if (
+                setup_draw_status[0] != 0.0
+                and pending_trade_side[0] == 0.0
+                and side[0] == 0.0
+            ):
+                setup_draw_entry[0] = nan
+                setup_draw_sl[0] = nan
+                setup_draw_tp[0] = nan
+                setup_draw_time[0] = nan
+                setup_draw_side[0] = 0.0
+                setup_draw_lot[0] = nan
+                setup_draw_status[0] = 0.0
 
             report_trades[0] = report_trades[1]
             report_active_trades[0] = report_active_trades[1]
