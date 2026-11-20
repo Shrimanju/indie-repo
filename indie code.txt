@@ -2573,19 +2573,9 @@ class Main(MainContext):
 
             self.chart.draw(
                 LabelAbs(
-                    'LOT ' + str(round(trade_lot[0], 2)),
+                    'LOT ' + str(round(trade_lot[0], 2)) + ' | ACTIVE',
                     AbsolutePosition(self.time[0], entry[0]),
                     font_size=10,
-                    text_color=color.WHITE,
-                    bg_color=color.BLACK(0.70)
-                )
-            )
-
-            self.chart.draw(
-                LabelAbs(
-                    'ACTIVE',
-                    AbsolutePosition(self.time[0], entry[0]),
-                    font_size=9,
                     text_color=color.WHITE,
                     bg_color=color.BLACK(0.70)
                 )
