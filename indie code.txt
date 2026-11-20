@@ -318,7 +318,7 @@ class Main(MainContext):
                 left_right_ratio=0.7
             ),
             text_color=color.BLACK,
-            bg_color=color.WHITE(1.0),
+            bg_color=color.TRANSPARENT,
             font_size=12
         )
 
@@ -1538,6 +1538,26 @@ class Main(MainContext):
                         * pending_trade_lot[0]
                     )
                     report_inactive_pnl[0] = report_inactive_pnl[0] + inactive_result
+
+                # Show the final pending-order status on its resolution candle.
+                inactive_side_text = 'BUY' if pending_side_value == 1.0 else 'SELL'
+                inactive_status_text = (
+                    'INACTIVE | ' + inactive_side_text
+                    + ' | LOT ' + str(round(pending_trade_lot[0], 2))
+                )
+                inactive_status_price = (
+                    pending_sl_value if pending_sl_touched else pending_tp_value
+                )
+                self.chart.draw(
+                    LabelAbs(
+                        inactive_status_text,
+                        AbsolutePosition(self.time[0], inactive_status_price),
+                        font_size=10,
+                        text_color=color.BLACK,
+                        bg_color=color.TRANSPARENT
+                    )
+                )
+
                 pending_trade_side[0] = 0.0
                 pending_trade_entry[0] = nan
                 pending_trade_sl[0] = nan
@@ -1567,6 +1587,23 @@ class Main(MainContext):
                 if pending_trade_setup_day[0] == self._selected_report_day_key:
                     report_active_trades[0] = report_active_trades[0] + 1.0
                     report_trades[0] = report_active_trades[0] + report_inactive_trades[0]
+
+                # Show ACTIVE on the exact candle where the pending entry triggers.
+                active_side_text = 'BUY' if pending_side_value == 1.0 else 'SELL'
+                active_status_text = (
+                    'ACTIVE | ' + active_side_text
+                    + ' | LOT ' + str(round(pending_trade_lot[0], 2))
+                )
+                self.chart.draw(
+                    LabelAbs(
+                        active_status_text,
+                        AbsolutePosition(self.time[0], pending_entry_value),
+                        font_size=10,
+                        text_color=color.BLACK,
+                        bg_color=color.TRANSPARENT
+                    )
+                )
+
                 pending_trade_side[0] = 0.0
                 pending_trade_entry[0] = nan
                 pending_trade_sl[0] = nan
@@ -1645,7 +1682,7 @@ class Main(MainContext):
                                 'PROFIT $' + str(round(result_amount, 2)),
                                 AbsolutePosition(self.time[0], tp[0]),
                                 font_size=10,
-                                text_color=color.GREEN,
+                                text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
                             )
                         )
@@ -1661,7 +1698,7 @@ class Main(MainContext):
                                 exit_label + str(round(result_amount, 2)),
                                 AbsolutePosition(self.time[0], sl[0]),
                                 font_size=10,
-                                text_color=color.RED,
+                                text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
                             )
                         )
@@ -1989,7 +2026,7 @@ class Main(MainContext):
                                 'ADAPTIVE SL: LOCK 0.60R',
                                 AbsolutePosition(self.time[0], sl[0]),
                                 font_size=9,
-                                text_color=color.YELLOW,
+                                text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
                             )
                         )
@@ -2000,7 +2037,7 @@ class Main(MainContext):
                                 'ADAPTIVE SL: LOCK 0.30R',
                                 AbsolutePosition(self.time[0], sl[0]),
                                 font_size=9,
-                                text_color=color.YELLOW,
+                                text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
                             )
                         )
@@ -2011,7 +2048,7 @@ class Main(MainContext):
                                 'ADAPTIVE SL: BREAK EVEN / TRAIL',
                                 AbsolutePosition(self.time[0], sl[0]),
                                 font_size=9,
-                                text_color=color.YELLOW,
+                                text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
                             )
                         )
@@ -2022,7 +2059,7 @@ class Main(MainContext):
                                 'ADAPTIVE SL: STRUCTURE TRAIL',
                                 AbsolutePosition(self.time[0], sl[0]),
                                 font_size=9,
-                                text_color=color.YELLOW,
+                                text_color=color.BLACK,
                                 bg_color=color.TRANSPARENT
                             )
                         )
