@@ -74,13 +74,6 @@ def ConfirmCandle(self):
     title='Risk Reward Ratio'
 )
 
-@param.str(
-    'entry_trigger_mode',
-    default='High/Low (Option B)',
-    options=['High/Low (Option B)', 'Close (Option C)'],
-    title='Entry Trigger Mode'
-)
-
 @param.float(
     'account_capital',
     default=200.0,
@@ -232,7 +225,6 @@ class Main(MainContext):
     def __init__(
         self,
         risk_reward,
-        entry_trigger_mode,
         account_capital,
         risk_percent,
         risk_buffer_percent,
@@ -250,7 +242,6 @@ class Main(MainContext):
     ):
 
         self.risk_reward = risk_reward
-        self.entry_trigger_mode = entry_trigger_mode
         self.account_capital = account_capital
         self.risk_percent = risk_percent
         self.risk_buffer_percent = risk_buffer_percent
@@ -2410,12 +2401,8 @@ class Main(MainContext):
                         self.high[6], self.high[7]
                     ])
 
-                    # Option B: SELL entry at signal candle Low.
-                    # Option C: SELL entry at signal candle Close.
-                    if self.entry_trigger_mode == 'High/Low (Option B)':
-                        entry_price = self.low[0]
-                    else:
-                        entry_price = self.close[0]
+                    # Original Entry 1 logic: confirmation candle midpoint.
+                    entry_price = candidate_entry_price
 
                     if sell_breakout_pullback_ready:
                         sell_reason = 'BREAKOUT + VOLUME PULLBACK'
@@ -2499,12 +2486,8 @@ class Main(MainContext):
                         self.low[6], self.low[7]
                     ])
 
-                    # Option B: BUY entry at signal candle High.
-                    # Option C: BUY entry at signal candle Close.
-                    if self.entry_trigger_mode == 'High/Low (Option B)':
-                        entry_price = self.high[0]
-                    else:
-                        entry_price = self.close[0]
+                    # Original Entry 1 logic: confirmation candle midpoint.
+                    entry_price = candidate_entry_price
 
                     if buy_breakout_pullback_ready:
                         buy_reason = 'BREAKOUT + VOLUME PULLBACK'
