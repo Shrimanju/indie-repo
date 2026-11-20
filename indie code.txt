@@ -2690,11 +2690,17 @@ class Main(MainContext):
             sl_text = ' | SL ' + str(round(sl[0], 2))
             tp_text = ' | TP ' + str(round(tp[0], 2))
             lot_text = ''
-
             if trade_lot[0] == trade_lot[0]:
                 lot_text = (
-                    'LOT ' + str(round(trade_lot[0], 2))
-                    + ' | RISK 
+                    ' | RISK $' + str(round(trade_risk_cash[0], 2))
+                )
+
+            combined_trade_description = (
+                'ACTIVE'
+                + '\nLOT ' + str(round(trade_lot[0], 2))
+                + lot_text
+                + '\nENTRY / SL / TP / SETUP'
+            )
 
             if entry[0] == entry[0]:
 
